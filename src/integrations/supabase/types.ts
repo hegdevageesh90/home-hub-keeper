@@ -9,7 +9,174 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      appliances: {
+        Row: {
+          category: string
+          home_profile_id: string
+          id: string
+          name: string
+          notes: string | null
+          purchase_date: string
+          warranty_document: string | null
+          warranty_expiration_date: string | null
+        }
+        Insert: {
+          category: string
+          home_profile_id: string
+          id?: string
+          name: string
+          notes?: string | null
+          purchase_date: string
+          warranty_document?: string | null
+          warranty_expiration_date?: string | null
+        }
+        Update: {
+          category?: string
+          home_profile_id?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          purchase_date?: string
+          warranty_document?: string | null
+          warranty_expiration_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appliances_home_profile_id_fkey"
+            columns: ["home_profile_id"]
+            isOneToOne: false
+            referencedRelation: "home_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      home_profiles: {
+        Row: {
+          address: string
+          construction_year: number
+          id: string
+          images: string[] | null
+          user_id: string
+        }
+        Insert: {
+          address: string
+          construction_year: number
+          id?: string
+          images?: string[] | null
+          user_id: string
+        }
+        Update: {
+          address?: string
+          construction_year?: number
+          id?: string
+          images?: string[] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      maintenance_reminders: {
+        Row: {
+          appliance_id: string
+          completed: boolean | null
+          description: string | null
+          due_date: string
+          id: string
+          recurrence_pattern: string | null
+          recurring: boolean | null
+          title: string
+        }
+        Insert: {
+          appliance_id: string
+          completed?: boolean | null
+          description?: string | null
+          due_date: string
+          id?: string
+          recurrence_pattern?: string | null
+          recurring?: boolean | null
+          title: string
+        }
+        Update: {
+          appliance_id?: string
+          completed?: boolean | null
+          description?: string | null
+          due_date?: string
+          id?: string
+          recurrence_pattern?: string | null
+          recurring?: boolean | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_reminders_appliance_id_fkey"
+            columns: ["appliance_id"]
+            isOneToOne: false
+            referencedRelation: "appliances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          email: string | null
+          id: string
+          name: string | null
+        }
+        Insert: {
+          email?: string | null
+          id: string
+          name?: string | null
+        }
+        Update: {
+          email?: string | null
+          id?: string
+          name?: string | null
+        }
+        Relationships: []
+      }
+      service_records: {
+        Row: {
+          appliance_id: string
+          cost: number
+          date: string
+          id: string
+          invoice_document: string | null
+          notes: string | null
+          provider_contact: string | null
+          provider_name: string
+          service_type: string
+        }
+        Insert: {
+          appliance_id: string
+          cost: number
+          date: string
+          id?: string
+          invoice_document?: string | null
+          notes?: string | null
+          provider_contact?: string | null
+          provider_name: string
+          service_type: string
+        }
+        Update: {
+          appliance_id?: string
+          cost?: number
+          date?: string
+          id?: string
+          invoice_document?: string | null
+          notes?: string | null
+          provider_contact?: string | null
+          provider_name?: string
+          service_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_records_appliance_id_fkey"
+            columns: ["appliance_id"]
+            isOneToOne: false
+            referencedRelation: "appliances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

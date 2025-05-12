@@ -1,73 +1,111 @@
-# Welcome to your Lovable project
 
-## Project info
+# Home Maintenance Logbook
 
-**URL**: https://lovable.dev/projects/d43a1f71-4f53-484c-8446-18a9a1a7f76e
+A digital platform to track home appliances, maintenance records, and schedule reminders for future maintenance.
 
-## How can I edit this code?
+## Project Structure
 
-There are several ways of editing your application.
+- `/src`: Frontend React application
+- `/backend`: FastAPI backend application
+- `supabase/`: Supabase configuration
 
-**Use Lovable**
+## Setup Instructions
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/d43a1f71-4f53-484c-8446-18a9a1a7f76e) and start prompting.
+### 1. Setup Supabase
 
-Changes made via Lovable will be committed automatically to this repo.
+This project uses Supabase for authentication, database, and storage. You already have a project set up with the ID: `lkmcjmuyqqydknhfecvj`.
 
-**Use your preferred IDE**
+### 2. Frontend Setup
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+1. Create a `.env` file by copying the example:
+   ```
+   cp .env.example .env
+   ```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+2. Install dependencies:
+   ```
+   npm install
+   ```
 
-Follow these steps:
+3. Start the development server:
+   ```
+   npm run dev
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### 3. Backend Setup
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+1. Navigate to the backend directory:
+   ```
+   cd backend
+   ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+2. Create a `.env` file by copying the example:
+   ```
+   cp .env.example .env
+   ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+3. Update your `.env` with your Supabase service role key from:
+   https://supabase.com/dashboard/project/lkmcjmuyqqydknhfecvj/settings/api
 
-**Edit a file directly in GitHub**
+4. Install dependencies and start the server:
+   ```
+   pip install -r requirements.txt
+   uvicorn main:app --reload
+   ```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+   Alternatively, use Docker:
+   ```
+   docker-compose up -d
+   ```
 
-**Use GitHub Codespaces**
+## Deployment Instructions
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Frontend Deployment
 
-## What technologies are used for this project?
+You can deploy the frontend to platforms like Vercel, Netlify, or any static hosting service.
 
-This project is built with:
+1. Build the frontend:
+   ```
+   npm run build
+   ```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+2. Deploy the `dist` folder to your hosting service.
 
-## How can I deploy this project?
+### Backend Deployment
 
-Simply open [Lovable](https://lovable.dev/projects/d43a1f71-4f53-484c-8446-18a9a1a7f76e) and click on Share -> Publish.
+The backend can be deployed to cloud services like AWS, Google Cloud, or Heroku.
 
-## Can I connect a custom domain to my Lovable project?
+#### Docker Deployment
 
-Yes, you can!
+1. Build and push the Docker image:
+   ```
+   docker build -t maintenance-api ./backend
+   ```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+2. Run on your server:
+   ```
+   docker run -p 8000:8000 --env-file ./backend/.env maintenance-api
+   ```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+#### Cloud Deployment
+
+For AWS Elastic Beanstalk:
+1. Install the EB CLI
+2. Navigate to the backend folder
+3. Run `eb init` and follow the prompts
+4. Run `eb create` to create an environment
+5. Configure environment variables in the AWS console
+
+## API Documentation
+
+Access the API documentation at:
+- When running locally: http://localhost:8000/docs
+- When deployed: https://your-domain.com/docs
+
+## Architecture
+
+This application uses:
+- React + Vite for the frontend
+- FastAPI for the backend API
+- Supabase for authentication and database
+- Tailwind CSS for styling

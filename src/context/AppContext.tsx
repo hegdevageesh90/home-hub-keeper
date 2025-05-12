@@ -10,6 +10,8 @@ import {
   ServiceType 
 } from '../types';
 import { useToast } from '../hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { homeProfilesApi, appliancesApi, serviceRecordsApi, remindersApi } from '@/api';
 
 interface AppContextType {
   isAuthenticated: boolean;
@@ -21,18 +23,18 @@ interface AppContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
-  createHomeProfile: (profile: Omit<HomeProfile, 'id' | 'userId'>) => void;
-  updateHomeProfile: (profile: Partial<HomeProfile>) => void;
-  addAppliance: (appliance: Omit<Appliance, 'id' | 'homeProfileId'>) => void;
-  updateAppliance: (id: string, appliance: Partial<Appliance>) => void;
-  deleteAppliance: (id: string) => void;
-  addServiceRecord: (record: Omit<ServiceRecord, 'id'>) => void;
-  updateServiceRecord: (id: string, record: Partial<ServiceRecord>) => void;
-  deleteServiceRecord: (id: string) => void;
-  addReminder: (reminder: Omit<MaintenanceReminder, 'id'>) => void;
-  updateReminder: (id: string, reminder: Partial<MaintenanceReminder>) => void;
-  deleteReminder: (id: string) => void;
-  markReminderComplete: (id: string) => void;
+  createHomeProfile: (profile: Omit<HomeProfile, 'id' | 'userId'>) => Promise<void>;
+  updateHomeProfile: (profile: Partial<HomeProfile>) => Promise<void>;
+  addAppliance: (appliance: Omit<Appliance, 'id' | 'homeProfileId'>) => Promise<void>;
+  updateAppliance: (id: string, appliance: Partial<Appliance>) => Promise<void>;
+  deleteAppliance: (id: string) => Promise<void>;
+  addServiceRecord: (record: Omit<ServiceRecord, 'id'>) => Promise<void>;
+  updateServiceRecord: (id: string, record: Partial<ServiceRecord>) => Promise<void>;
+  deleteServiceRecord: (id: string) => Promise<void>;
+  addReminder: (reminder: Omit<MaintenanceReminder, 'id'>) => Promise<void>;
+  updateReminder: (id: string, reminder: Partial<MaintenanceReminder>) => Promise<void>;
+  deleteReminder: (id: string) => Promise<void>;
+  markReminderComplete: (id: string) => Promise<void>;
   getApplianceById: (id: string) => Appliance | undefined;
   getServiceRecordsByApplianceId: (applianceId: string) => ServiceRecord[];
   getRemindersByApplianceId: (applianceId: string) => MaintenanceReminder[];
@@ -40,113 +42,6 @@ interface AppContextType {
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
-
-// Mock data generator functions
-function generateMockUser(): User {
-  return {
-    id: 'user-1',
-    email: 'user@example.com',
-    name: 'Demo User'
-  };
-}
-
-function generateMockHomeProfile(): HomeProfile {
-  return {
-    id: 'home-1',
-    address: '123 Main Street, Anytown, CA 12345',
-    constructionYear: 1995,
-    userId: 'user-1',
-    images: ['/placeholder.svg']
-  };
-}
-
-function generateMockAppliances(): Appliance[] {
-  return [
-    {
-      id: 'appliance-1',
-      name: 'Whirlpool Refrigerator',
-      category: ApplianceCategory.KITCHEN,
-      purchaseDate: '2021-05-15',
-      warrantyExpirationDate: '2026-05-15',
-      notes: 'French door style with water dispenser',
-      homeProfileId: 'home-1'
-    },
-    {
-      id: 'appliance-2',
-      name: 'LG Washing Machine',
-      category: ApplianceCategory.LAUNDRY,
-      purchaseDate: '2020-02-10',
-      warrantyExpirationDate: '2023-02-10',
-      notes: 'Front-loading, energy efficient',
-      homeProfileId: 'home-1'
-    },
-    {
-      id: 'appliance-3',
-      name: 'Lennox HVAC System',
-      category: ApplianceCategory.HVAC,
-      purchaseDate: '2018-07-20',
-      warrantyExpirationDate: '2023-07-20',
-      notes: '3-ton capacity, 16 SEER rating',
-      homeProfileId: 'home-1'
-    }
-  ];
-}
-
-function generateMockServiceRecords(): ServiceRecord[] {
-  return [
-    {
-      id: 'service-1',
-      applianceId: 'appliance-3',
-      date: '2022-05-12',
-      serviceType: ServiceType.MAINTENANCE,
-      providerName: 'Cool Air Services',
-      providerContact: '555-123-4567',
-      cost: 150,
-      notes: 'Annual maintenance and filter replacement'
-    },
-    {
-      id: 'service-2',
-      applianceId: 'appliance-2',
-      date: '2022-08-05',
-      serviceType: ServiceType.REPAIR,
-      providerName: 'Appliance Fix-It',
-      providerContact: '555-987-6543',
-      cost: 220,
-      notes: 'Replaced drain pump'
-    }
-  ];
-}
-
-function generateMockReminders(): MaintenanceReminder[] {
-  const today = new Date();
-  const nextWeek = new Date(today);
-  nextWeek.setDate(today.getDate() + 7);
-  const nextMonth = new Date(today);
-  nextMonth.setMonth(today.getMonth() + 1);
-  
-  return [
-    {
-      id: 'reminder-1',
-      applianceId: 'appliance-3',
-      title: 'HVAC Filter Replacement',
-      description: 'Replace air filters throughout the house',
-      dueDate: nextWeek.toISOString().split('T')[0],
-      recurring: true,
-      recurrencePattern: '3M', // Every 3 months
-      completed: false
-    },
-    {
-      id: 'reminder-2',
-      applianceId: 'appliance-1',
-      title: 'Clean Refrigerator Coils',
-      description: 'Clean coils on the back of the refrigerator',
-      dueDate: nextMonth.toISOString().split('T')[0],
-      recurring: true,
-      recurrencePattern: '6M', // Every 6 months
-      completed: false
-    }
-  ];
-}
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -156,41 +51,101 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [serviceRecords, setServiceRecords] = useState<ServiceRecord[]>([]);
   const [reminders, setReminders] = useState<MaintenanceReminder[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [session, setSession] = useState<any>(null);
   const { toast } = useToast();
 
-  // Mock authentication
+  // Setup Supabase auth listener
+  useEffect(() => {
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ? {
+          id: session.user.id,
+          email: session.user.email || '',
+          name: session.user.user_metadata?.name || 'User'
+        } : null);
+        setIsAuthenticated(!!session?.user);
+        
+        // Fetch user data if authenticated
+        if (session?.user) {
+          setTimeout(() => {
+            fetchUserData();
+          }, 0);
+        }
+      }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ? {
+        id: session.user.id,
+        email: session.user.email || '',
+        name: session.user.user_metadata?.name || 'User'
+      } : null);
+      setIsAuthenticated(!!session?.user);
+      
+      // Fetch user data if authenticated
+      if (session?.user) {
+        fetchUserData();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  // Fetch user data from FastAPI backend
+  const fetchUserData = async () => {
+    try {
+      // Fetch home profiles
+      const homeProfilesData = await homeProfilesApi.getAll();
+      if (homeProfilesData && homeProfilesData.length > 0) {
+        setHomeProfile(homeProfilesData[0] as HomeProfile);
+      }
+      
+      // Fetch appliances
+      const appliancesData = await appliancesApi.getAll();
+      setAppliances(appliancesData as Appliance[]);
+      
+      // Fetch service records
+      const serviceRecordsData = await serviceRecordsApi.getAll();
+      setServiceRecords(serviceRecordsData as ServiceRecord[]);
+      
+      // Fetch reminders
+      const remindersData = await remindersApi.getAll();
+      setReminders(remindersData as MaintenanceReminder[]);
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      toast({
+        title: "Data fetch failed",
+        description: "There was an error loading your data.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Authentication functions
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
       
-      if (email === 'demo@example.com' && password === 'password') {
-        const user = generateMockUser();
-        const homeProfile = generateMockHomeProfile();
-        const appliances = generateMockAppliances();
-        const serviceRecords = generateMockServiceRecords();
-        const reminders = generateMockReminders();
-        
-        setUser(user);
-        setHomeProfile(homeProfile);
-        setAppliances(appliances);
-        setServiceRecords(serviceRecords);
-        setReminders(reminders);
-        setIsAuthenticated(true);
-        
-        localStorage.setItem('user', JSON.stringify(user));
-        toast({
-          title: "Login successful",
-          description: "Welcome back to your Home Maintenance Logbook!",
-        });
-      } else {
-        throw new Error('Invalid credentials');
-      }
-    } catch (error) {
+      if (error) throw error;
+      
+      toast({
+        title: "Login successful",
+        description: "Welcome back to your Home Maintenance Logbook!",
+      });
+    } catch (error: any) {
       toast({
         title: "Login failed",
-        description: "Invalid email or password",
+        description: error.message || "Invalid email or password",
         variant: "destructive",
       });
       throw error;
@@ -202,27 +157,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const register = async (name: string, email: string, password: string) => {
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const user = {
-        id: `user-${Date.now()}`,
+      const { error } = await supabase.auth.signUp({
         email,
-        name,
-      };
+        password,
+        options: {
+          data: {
+            name
+          }
+        }
+      });
       
-      setUser(user);
-      setIsAuthenticated(true);
-      localStorage.setItem('user', JSON.stringify(user));
+      if (error) throw error;
       
       toast({
         title: "Registration successful",
         description: "Welcome to your Home Maintenance Logbook!",
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Registration failed",
-        description: "Please try again later",
+        description: error.message || "Please try again later",
         variant: "destructive",
       });
       throw error;
@@ -231,170 +185,272 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setHomeProfile(null);
-    setAppliances([]);
-    setServiceRecords([]);
-    setReminders([]);
-    setIsAuthenticated(false);
-    localStorage.removeItem('user');
-    toast({
-      title: "Logged out",
-      description: "You have been successfully logged out",
-    });
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setHomeProfile(null);
+      setAppliances([]);
+      setServiceRecords([]);
+      setReminders([]);
+      setIsAuthenticated(false);
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out",
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        title: "Logout failed",
+        description: "There was an error during logout",
+        variant: "destructive",
+      });
+    }
   };
 
-  const createHomeProfile = (profile: Omit<HomeProfile, 'id' | 'userId'>) => {
-    if (!user) return;
-    
-    const newProfile: HomeProfile = {
-      ...profile,
-      id: `home-${Date.now()}`,
-      userId: user.id
-    };
-    
-    setHomeProfile(newProfile);
-    toast({
-      title: "Home profile created",
-      description: "Your home profile has been successfully created",
-    });
+  // Home profile functions
+  const createHomeProfile = async (profile: Omit<HomeProfile, 'id' | 'userId'>) => {
+    try {
+      const createdProfile = await homeProfilesApi.create(profile);
+      setHomeProfile(createdProfile as HomeProfile);
+      toast({
+        title: "Home profile created",
+        description: "Your home profile has been successfully created",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to create profile",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
 
-  const updateHomeProfile = (profile: Partial<HomeProfile>) => {
+  const updateHomeProfile = async (profile: Partial<HomeProfile>) => {
     if (!homeProfile) return;
     
-    const updatedProfile = {
-      ...homeProfile,
-      ...profile
-    };
-    
-    setHomeProfile(updatedProfile);
-    toast({
-      title: "Home profile updated",
-      description: "Your home profile has been successfully updated",
-    });
+    try {
+      const updatedProfile = await homeProfilesApi.update(homeProfile.id, profile);
+      setHomeProfile({...homeProfile, ...updatedProfile} as HomeProfile);
+      toast({
+        title: "Home profile updated",
+        description: "Your home profile has been successfully updated",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Update failed",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
 
-  const addAppliance = (appliance: Omit<Appliance, 'id' | 'homeProfileId'>) => {
+  // Appliance functions
+  const addAppliance = async (appliance: Omit<Appliance, 'id' | 'homeProfileId'>) => {
     if (!homeProfile) return;
     
-    const newAppliance: Appliance = {
-      ...appliance,
-      id: `appliance-${Date.now()}`,
-      homeProfileId: homeProfile.id
-    };
-    
-    setAppliances([...appliances, newAppliance]);
-    toast({
-      title: "Appliance added",
-      description: `${newAppliance.name} has been added to your inventory`,
-    });
+    try {
+      const newAppliance = await appliancesApi.create({
+        ...appliance,
+        home_profile_id: homeProfile.id
+      });
+      
+      setAppliances([...appliances, newAppliance as Appliance]);
+      toast({
+        title: "Appliance added",
+        description: `${newAppliance.name} has been added to your inventory`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to add appliance",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
 
-  const updateAppliance = (id: string, appliance: Partial<Appliance>) => {
-    const updatedAppliances = appliances.map(a => 
-      a.id === id ? { ...a, ...appliance } : a
-    );
-    
-    setAppliances(updatedAppliances);
-    toast({
-      title: "Appliance updated",
-      description: "Your appliance has been successfully updated",
-    });
+  const updateAppliance = async (id: string, appliance: Partial<Appliance>) => {
+    try {
+      const updatedAppliance = await appliancesApi.update(id, appliance);
+      setAppliances(appliances.map(a => 
+        a.id === id ? { ...a, ...updatedAppliance } as Appliance : a
+      ));
+      toast({
+        title: "Appliance updated",
+        description: "Your appliance has been successfully updated",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Update failed",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
 
-  const deleteAppliance = (id: string) => {
-    // Delete associated service records and reminders first
-    setServiceRecords(serviceRecords.filter(sr => sr.applianceId !== id));
-    setReminders(reminders.filter(r => r.applianceId !== id));
-    
-    // Then delete the appliance
-    setAppliances(appliances.filter(a => a.id !== id));
-    toast({
-      title: "Appliance deleted",
-      description: "The appliance and all associated records have been deleted",
-    });
+  const deleteAppliance = async (id: string) => {
+    try {
+      await appliancesApi.delete(id);
+      
+      // Delete associated service records and reminders from state
+      setServiceRecords(serviceRecords.filter(sr => sr.applianceId !== id));
+      setReminders(reminders.filter(r => r.applianceId !== id));
+      
+      // Delete the appliance from state
+      setAppliances(appliances.filter(a => a.id !== id));
+      toast({
+        title: "Appliance deleted",
+        description: "The appliance and all associated records have been deleted",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Delete failed",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
 
-  const addServiceRecord = (record: Omit<ServiceRecord, 'id'>) => {
-    const newRecord: ServiceRecord = {
-      ...record,
-      id: `service-${Date.now()}`
-    };
-    
-    setServiceRecords([...serviceRecords, newRecord]);
-    toast({
-      title: "Service record added",
-      description: "Your service record has been successfully added",
-    });
+  // Service record functions
+  const addServiceRecord = async (record: Omit<ServiceRecord, 'id'>) => {
+    try {
+      const newRecord = await serviceRecordsApi.create(record);
+      setServiceRecords([...serviceRecords, newRecord as ServiceRecord]);
+      toast({
+        title: "Service record added",
+        description: "Your service record has been successfully added",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to add service record",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
 
-  const updateServiceRecord = (id: string, record: Partial<ServiceRecord>) => {
-    const updatedRecords = serviceRecords.map(sr => 
-      sr.id === id ? { ...sr, ...record } : sr
-    );
-    
-    setServiceRecords(updatedRecords);
-    toast({
-      title: "Service record updated",
-      description: "Your service record has been successfully updated",
-    });
+  const updateServiceRecord = async (id: string, record: Partial<ServiceRecord>) => {
+    try {
+      const updatedRecord = await serviceRecordsApi.update(id, record);
+      setServiceRecords(serviceRecords.map(sr => 
+        sr.id === id ? { ...sr, ...updatedRecord } as ServiceRecord : sr
+      ));
+      toast({
+        title: "Service record updated",
+        description: "Your service record has been successfully updated",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Update failed",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
 
-  const deleteServiceRecord = (id: string) => {
-    setServiceRecords(serviceRecords.filter(sr => sr.id !== id));
-    toast({
-      title: "Service record deleted",
-      description: "Your service record has been successfully deleted",
-    });
+  const deleteServiceRecord = async (id: string) => {
+    try {
+      await serviceRecordsApi.delete(id);
+      setServiceRecords(serviceRecords.filter(sr => sr.id !== id));
+      toast({
+        title: "Service record deleted",
+        description: "Your service record has been successfully deleted",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Delete failed",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
 
-  const addReminder = (reminder: Omit<MaintenanceReminder, 'id'>) => {
-    const newReminder: MaintenanceReminder = {
-      ...reminder,
-      id: `reminder-${Date.now()}`
-    };
-    
-    setReminders([...reminders, newReminder]);
-    toast({
-      title: "Reminder added",
-      description: "Your maintenance reminder has been scheduled",
-    });
+  // Reminder functions
+  const addReminder = async (reminder: Omit<MaintenanceReminder, 'id'>) => {
+    try {
+      const newReminder = await remindersApi.create(reminder);
+      setReminders([...reminders, newReminder as MaintenanceReminder]);
+      toast({
+        title: "Reminder added",
+        description: "Your maintenance reminder has been scheduled",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to add reminder",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
 
-  const updateReminder = (id: string, reminder: Partial<MaintenanceReminder>) => {
-    const updatedReminders = reminders.map(r => 
-      r.id === id ? { ...r, ...reminder } : r
-    );
-    
-    setReminders(updatedReminders);
-    toast({
-      title: "Reminder updated",
-      description: "Your maintenance reminder has been updated",
-    });
+  const updateReminder = async (id: string, reminder: Partial<MaintenanceReminder>) => {
+    try {
+      const updatedReminder = await remindersApi.update(id, reminder);
+      setReminders(reminders.map(r => 
+        r.id === id ? { ...r, ...updatedReminder } as MaintenanceReminder : r
+      ));
+      toast({
+        title: "Reminder updated",
+        description: "Your maintenance reminder has been updated",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Update failed",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
 
-  const deleteReminder = (id: string) => {
-    setReminders(reminders.filter(r => r.id !== id));
-    toast({
-      title: "Reminder deleted",
-      description: "Your maintenance reminder has been deleted",
-    });
+  const deleteReminder = async (id: string) => {
+    try {
+      await remindersApi.delete(id);
+      setReminders(reminders.filter(r => r.id !== id));
+      toast({
+        title: "Reminder deleted",
+        description: "Your maintenance reminder has been deleted",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Delete failed",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
 
-  const markReminderComplete = (id: string) => {
-    const updatedReminders = reminders.map(r => 
-      r.id === id ? { ...r, completed: true } : r
-    );
-    
-    setReminders(updatedReminders);
-    toast({
-      title: "Reminder completed",
-      description: "Your maintenance task has been marked as completed",
-    });
+  const markReminderComplete = async (id: string) => {
+    try {
+      await remindersApi.markComplete(id);
+      setReminders(reminders.map(r => 
+        r.id === id ? { ...r, completed: true } as MaintenanceReminder : r
+      ));
+      toast({
+        title: "Reminder completed",
+        description: "Your maintenance task has been marked as completed",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to mark reminder as complete",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
 
+  // Utility functions
   const getApplianceById = (id: string) => {
     return appliances.find(a => a.id === id);
   };
@@ -406,21 +462,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const getRemindersByApplianceId = (applianceId: string) => {
     return reminders.filter(r => r.applianceId === applianceId);
   };
-
-  // Check for existing user session
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-      setIsAuthenticated(true);
-      
-      // Fetch demo data for the logged in user
-      setHomeProfile(generateMockHomeProfile());
-      setAppliances(generateMockAppliances());
-      setServiceRecords(generateMockServiceRecords());
-      setReminders(generateMockReminders());
-    }
-  }, []);
 
   return (
     <AppContext.Provider
